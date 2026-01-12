@@ -1,5 +1,5 @@
-Avance Ejecutada SVG = 
-VAR ValueRaw = COALESCE ( [Avance Carga Ejecutada], 0 )
+Barra de Progreso SVG = 
+VAR ValueRaw = COALESCE ( [/*==== Medida de Progreso ======*/], 0 )
 VAR Value2   = MIN ( 1, MAX ( 0, ValueRaw ) )
 VAR PctTxt   = FORMAT ( Value2, "0.00%" )
 
@@ -17,26 +17,26 @@ VAR InnerW = TotalW - PadL - PadR
 VAR FillW  = ROUND ( InnerW * Value2, 0 )
 
 -- Colores
-VAR BgColor   = "#E6E6E6"
-VAR FillColor = "#06234d"
+VAR BgColor   = "#E6E6E6"  -- Color de Fondo
+VAR FillColor = "#06234d"  -- Color de barra
 
 -- Texto
 VAR FontSize = 11
-VAR TextPadRight = 6   -- qué tan pegado al borde derecho de la barra
+VAR TextPadRight = 6   -- Espacio pegado al borde derecho de la barra
 
--- Umbral: ancho mínimo para que el texto "quepa" dentro de la barra
--- (aprox. 7 caracteres * 7px = ~49; ajusta si cambias formato/tamaño)
+-- Umbral: ancho mínimo para que el texto quede dentro de la barra
 VAR MinFillForInside = 46
 
 VAR UseInside = FillW >= MinFillForInside
 
+-- Condición para cambiar de color
 VAR TextColor =
     IF ( UseInside, "#FFFFFF", "#06234d" )
 
 -- Posiciones
 VAR BgX = PadL
 VAR BgY = PadT
-VAR Rx  = 0
+VAR Rx  = 0  --redondeo de borde de barra
 
 VAR TextX =
     IF(
