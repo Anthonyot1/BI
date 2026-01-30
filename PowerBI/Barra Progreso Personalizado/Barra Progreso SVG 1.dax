@@ -3,11 +3,11 @@ VAR ValueRaw = COALESCE ( [/*==== Medida de Progreso ======*/], 0 )
 VAR Value2   = MIN ( 1, MAX ( 0, ValueRaw ) )
 VAR PctTxt   = FORMAT ( Value2, "0.00%" )
 
--- Tamaños
+-- Tamaño de barra
 VAR TotalW = 200
 VAR TotalH = 26
 
--- Padding
+-- Padding: Espacio para bordes
 VAR PadL = 10
 VAR PadR = 10
 VAR PadT = 5
