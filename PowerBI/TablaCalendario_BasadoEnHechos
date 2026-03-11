@@ -5,8 +5,6 @@ let
         // Agregar más tablas aquí si es necesario:
         // [NombreTabla = "Ventas", NombreColumnaFecha = "FechaVenta"],
         // [NombreTabla = "Compras", NombreColumnaFecha = "FechaCompra"]
-        [NombreTabla = "DimMes", NombreColumnaFecha = "FechaMes"],
-        [NombreTabla = "DimMes", NombreColumnaFecha = "FechaMes"]
     },
     /*******************************************/
 
