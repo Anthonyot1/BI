@@ -1,0 +1,87 @@
+let
+    /************** CONFIGURACIÓN **************/
+    // Definir las tablas y columnas de fecha a analizar
+    ConfiguracionTablas = {
+        // Agregar más tablas aquí si es necesario:
+        // [NombreTabla = "Ventas", NombreColumnaFecha = "FechaVenta"],
+        // [NombreTabla = "Compras", NombreColumnaFecha = "FechaCompra"]
+        [NombreTabla = "DimMes", NombreColumnaFecha = "FechaMes"],
+        [NombreTabla = "DimMes", NombreColumnaFecha = "FechaMes"]
+    },
+    /*******************************************/
+
+    // Función: Obtener tabla si existe en el modelo
+    ObtenerTabla = (nombreTabla as text) as nullable table =>
+        try Expression.Evaluate("#""" & nombreTabla & """", #shared) 
+        otherwise null,
+
+    // Función: Extraer lista de fechas válidas de una tabla
+    ExtraerFechas = (tabla as nullable table, nombreColumna as text) as list =>
+        if tabla = null or not Table.HasColumns(tabla, nombreColumna) then {}
+        else List.RemoveNulls(
+            Table.Column(
+                Table.TransformColumnTypes(tabla, {{nombreColumna, type date}}, "es-ES"),
+                nombreColumna
+            )
+        ),
+
+    // Procesar cada tabla configurada y extraer sus fechas
+    ListasFechasPorTabla = List.Transform(
+        ConfiguracionTablas,
+        each ExtraerFechas(
+            ObtenerTabla([NombreTabla]), 
+            [NombreColumnaFecha]
+        )
+    ),
+
+    // Combinar todas las fechas en una sola lista
+    TodasLasFechas = List.Combine(ListasFechasPorTabla),
+
+    // Validar que existan fechas
+    ValidarFechas = if List.IsEmpty(TodasLasFechas) 
+        then error "No se encontraron fechas válidas en ninguna de las tablas configuradas"
+        else true,
+
+    // Obtener fechas únicas y ordenadas
+    FechasUnicas = List.Sort(List.Distinct(TodasLasFechas)),
+
+    // Crear tabla calendario con todas las columnas de análisis
+    TablaCalendario = Table.FromColumns(
+        {
+            FechasUnicas,
+            List.Transform(FechasUnicas, each Number.From(Date.ToText(_, "yyyyMMdd"))),
+            List.Transform(FechasUnicas, Date.Year),
+            List.Transform(FechasUnicas, Date.Month),
+            List.Transform(FechasUnicas, each Date.ToText(_, "MMMM", "es-ES")),
+            List.Transform(FechasUnicas, each 
+                Text.PadStart(Text.From(Date.Month(_)), 2, "0") & "." & 
+                Date.ToText(_, "MMM", "es-ES")),
+            List.Transform(FechasUnicas, each Date.ToText(_, "MMM", "es-ES")),
+            List.Transform(FechasUnicas, each "T" & Text.From(Date.QuarterOfYear(_))),
+            List.Transform(FechasUnicas, each 
+                Text.From(Date.Year(_)) & "-" & 
+                Text.PadStart(Text.From(Date.Month(_)), 2, "0")),
+            List.Transform(FechasUnicas, each Date.WeekOfYear(_, Day.Monday)),
+            List.Transform(FechasUnicas, each Date.DayOfWeek(_, Day.Monday) + 1),
+            List.Transform(FechasUnicas, each Date.ToText(_, "dddd", "es-ES")),
+            List.Transform(FechasUnicas, each Date.DayOfWeek(_, Day.Monday) >= 5)
+        },
+        // Definir tipos de datos de cada columna
+        type table [
+            Fecha = date,
+            DateId = Int64.Type,
+            Año = Int64.Type,
+            MesNum = Int64.Type,
+            MesNombre = text,
+            MesNumNombre = text,
+            MesCorto = text,
+            Trimestre = text,
+            AñoMes = text,
+            SemanaISO = Int64.Type,
+            DiaSemanaNum = Int64.Type,
+            DiaSemanaNombre = text,
+            EsFinDeSemana = logical
+        ]
+    )
+in
+    TablaCalendario
